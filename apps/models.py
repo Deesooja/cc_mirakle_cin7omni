@@ -51,7 +51,7 @@ class PlatformSettings(models.Model):
 class Platform(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, db_index=True, unique=False)
     name = models.CharField(max_length=10, choices=[('MIRAKLE', 'MIRAKLE'), ('CIN7', 'CIN7')])
-    type = models.CharField(max_length=10, choices=[('SOURCE', 'SOURCE'), ('DESTINATION', 'DESTINATION')])
+    type = models.CharField(max_length=50, choices=[('SOURCE', 'SOURCE'), ('DESTINATION', 'DESTINATION')])
     code = models.CharField(max_length=255, null=True)
     display_name = models.CharField(max_length=255)
     credentials = models.OneToOneField(PlatformCredentials, on_delete=models.CASCADE, null=True)
@@ -103,6 +103,51 @@ class PlatformProduct(models.Model):
     def __str__(self):
         return self.name
 
+class PlatformOrder(models.Model):
+    platform = models.ForeignKey(Platform, on_delete=models.CASCADE, db_index=True, unique=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, db_index=True, unique=False)
+    api_id = models.CharField(max_length=255, null=False)
+    customer = models.ForeignKey(PlatformCustomer, null=True, on_delete=models.DO_NOTHING)
+    api_code = models.CharField(max_length=255, null=True)
+    api_status = models.CharField(max_length=50, null=False)
 
+    total_price = models.ForeignKey(Price, null=False, related_name="TotalPriceOrder", on_delete=models.CASCADE)
 
+    shipping_price = models.ForeignKey(Price, null=True, related_name="ShippingPriceOrder", on_delete=models.CASCADE)
 
+    tax_price = models.ForeignKey(Price, null=True, related_name="TaxPriceOrder", on_delete=models.CASCADE)
+
+    discount_percent = models.CharField(max_length=10, null=True)
+    isPaid = models.BooleanField(default=False)
+    payment_status = models.CharField(max_length=20, null=True)
+    isFulfilled = models.BooleanField(default=False)
+    api_created_at = models.DateTimeField(null=True)
+    api_updated_at = models.DateTimeField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.api_id
+
+class PlatformOrderPayment(models.Model):
+    platform_order = models.ForeignKey(PlatformOrder, on_delete=models.CASCADE, db_index=True, unique=False)
+    api_id = models.CharField(max_length=255, null=True)
+    paid_amount = models.FloatField(null=False)
+    paid_on = models.DateTimeField()
+    payment_mode = models.CharField(max_length=25, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class PlatformOrderLineItem(models.Model):
+    platform_order = models.ForeignKey(PlatformOrder, on_delete=models.CASCADE, db_index=True, unique=False)
+    platform_product = models.ForeignKey(PlatformProduct, on_delete=models.DO_NOTHING, null=True)
+    api_id = models.CharField(max_length=255, null=False)
+    sku = models.CharField(max_length=255, db_index=True)
+    name = models.CharField(max_length=255, null=False)
+    price = models.ForeignKey(Price, on_delete=models.DO_NOTHING, null=True, related_name="PlatformOrderLineItemPrice")
+    tax_price = models.ForeignKey(Price, on_delete=models.DO_NOTHING, null=True, related_name="PlatformOrderLineItemtax")
+    product_api_id = models.CharField(max_length=255, null=True)
+    product_api_variation_id = models.CharField(max_length=255, null=True)
+    quantity = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
