@@ -1,10 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
+from apps.home.services.DataBaseServices import insertDataOnTable
 
 
 # Create your models here.
-
-
 class Address(models.Model):
     first_name = models.CharField(max_length=255, null=False, default="Customer")
     last_name = models.CharField(max_length=255, null=True)
@@ -36,6 +35,14 @@ class PlatformCredentials(models.Model):
     refresh_token = models.CharField(max_length=255, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    @staticmethod
+    def CreatePlatformCredentials(self,data):
+        fields = [field.name for field in self._meta.get_fields()]
+        platform_credential_object = insertDataOnTable(fields=fields,model=self,data=data)
+        return platform_credential_object
+
+    class Meta:
+        ordering = ['created_at']
 
 class PlatformSettings(models.Model):
     isSyncOrder = models.BooleanField(default=False)
