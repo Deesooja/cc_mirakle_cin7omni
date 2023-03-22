@@ -88,10 +88,27 @@ class MirakleGetOrdersView(APIView):
 
         platform=Platform.objects.get(id=3)
 
-        Order_object=MirakleServices(platform,"1030171019-A").GetShipments()
+        Order_object=MirakleServices(platform,"1030171019-A").CreateOrdersOnDBTables()
 
-        if Order_object.isSuccess:
+        # if Order_object.isSuccess:
 
-            return endpointResponse(status_code=200, massage="OK", data=Order_object.body)
+            # address_json=create_address_json(Order_object.body['orders'][0])
+            # print(address_json)
+            # price_json=create_price_json(Order_object.body['orders'][0])
+            # print(price_json)
+            # platform_customer_json=create_platform_customer_json(Order_object.body['orders'][0],1,3)
+            # print(platform_customer_json)
+            # platform_product_json=create_platform_product_json_from_mirakle(Order_object.body['orders'][0], 1, 3, 1)
+            # print(platform_product_json)
+            # product_order_json=create_platform_product_order_json_from_mirakle(Order_object.body['orders'][0],1,3,1,1,2,3)
+            # print(product_order_json)
+            # platform_order_payment_json=create_platform_order_payment_json_from_mirakle(Order_object.body['orders'][0],3)
+            # print(platform_order_payment_json)
+            # platform_order_line_item_json=create_platform_order_line_item_json_from_mirakle(Order_object.body['orders'][0], 3, 1, 1,2)
+            # print(platform_order_line_item_json)
+
+
+            # return endpointResponse(status_code=200, massage="OK", data=Order_object.body)
+        return endpointResponse(status_code=200, massage=Order_object, data=[])
         
-        return endpointResponse(status_code=400, massage="Bad request", data=[])
+        # return endpointResponse(status_code=400, massage="Bad request", data=[])

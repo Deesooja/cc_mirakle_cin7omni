@@ -23,3 +23,44 @@ class PlatformSerializer(serializers.ModelSerializer):
     class Meta:
         model = Platform
         fields = ['id', 'user', 'name', 'type','code','display_name','credentials','settings','isConnected','isActive','created_at','updated_at']
+
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = '__all__'
+
+class PriceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Price
+        fields = '__all__'
+
+class PlatformSyncDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlatformSyncData
+        fields = '__all__'
+
+class PlatformCustomerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlatformCustomer
+        fields = '__all__'
+
+class PlatformProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlatformProduct
+        fields = '__all__'
+
+class PlatformOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlatformOrder
+        fields = '__all__'
+
+class PlatformOrderPaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlatformOrderPayment
+        fields = '__all__'
+
+class PlatformOrderLineItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlatformOrderLineItem
+        fields = '__all__'
+
