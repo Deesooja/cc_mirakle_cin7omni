@@ -86,25 +86,23 @@ class PlatformView(APIView):
 class MirakleGetOrdersView(APIView):
     def get(self, request):
 
-        platform=Platform.objects.get(id=3)
+        platform=Platform.objects.get(id=5)
 
         mirakleServicesObject=MirakleServices(platform)
 
         Order_object=mirakleServicesObject.GetOrders()
 
         if Order_object.isSuccess:
-            res = MirakleServices.UpdateOrdersOnDBTables(mirakleServicesObject,Order_object.body['orders'][0])
-
-            res = MirakleServices.CreateOrdersOnDBTables(Order_object.body['orders'][2])
 
             for order in Order_object.body['orders'][0:2]:
 
                 if not PlatformOrder.objects.filter(api_id=order.get("order_id")).exists():
 
-                    res=MirakleServices.CreateOrdersOnDBTables(mirakleServicesObject,order)
+                    res=mirakleServicesObject.CreateOrdersOnDBTables(order)
+
                 else:
 
-                    res=MirakleServices.UpdateOrdersOnDBTables(mirakleServicesObject,order)
+                    res=mirakleServicesObject.UpdateOrdersOnDBTables(order)
 
 
             # address_json=create_address_json(Order_object.body['orders'][0])

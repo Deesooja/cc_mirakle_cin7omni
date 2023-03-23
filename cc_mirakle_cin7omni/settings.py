@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'apps',
     'rest_framework',
+    'django_cron',
 
 
 ]
@@ -56,6 +57,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+CRON_CLASSES = [
+    "apps.crons.JobScheduler.SyncOrdersFromPlatform",
 ]
 
 ROOT_URLCONF = 'cc_mirakle_cin7omni.urls'

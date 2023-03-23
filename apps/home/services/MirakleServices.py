@@ -13,38 +13,60 @@ class MirakleServices():
 
         self.platform=platform
 
-
     def GetOrders(self)->ApiResponse:
-        url=self.base_url+"orders"
 
-        response_object=GetRequest(url=url,headers=self.headers)
+        try:
 
-        return response_object
+            url=self.base_url+"orders"
+
+            response_object=GetRequest(url=url,headers=self.headers)
+
+            return response_object
+
+        except Exception as e:
+
+            print("Mirakle Services ->GetOrders", e)
 
     def GetSingleOrders(self,order_id)->ApiResponse:
 
-        url=self.base_url+"orders"+"?order_ids"+order_id
+        try:
 
-        response_object=GetRequest(url=url,headers=self.headers)
+            url=self.base_url+"orders"+"?order_ids"+order_id
 
-        return response_object
+            response_object=GetRequest(url=url,headers=self.headers)
+
+            return response_object
+
+        except Exception as e:
+
+            print("Mirakle Services ->GetSingleOrders", e)
 
     def GetShipments(self) -> ApiResponse:
+        try:
 
-        url = self.base_url + "shipments"
+            url = self.base_url + "shipments"
 
-        response_object = GetRequest(url=url, headers=self.headers)
+            response_object = GetRequest(url=url, headers=self.headers)
 
-        return response_object
+            return response_object
+
+        except Exception as e:
+
+            print("Mirakle Services ->GetShipments",e)
+
     def __headers(self,authorization):
+        try:
 
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": authorization,
-        }
-        return headers
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": authorization,
+            }
+            return headers
 
-    @staticmethod
+        except Exception as e:
+            print("Mirakle __headers",e)
+
+
     def CreateOrdersOnDBTables(self,order):
         try:
 
@@ -53,17 +75,17 @@ class MirakleServices():
             return res
 
         except Exception as e:
-            print(e)
 
-    @staticmethod
+            print("CreateOrdersOnDBTables",e)
+
+
     def UpdateOrdersOnDBTables(self,order):
-        # try:
+        try:
 
-        res=insert_and_update_orders_data_on_db_tables_from_mirakle(order, self.platform,update=True)
+            res=insert_and_update_orders_data_on_db_tables_from_mirakle(order, self.platform,update=True)
 
-        print("UpdateOrdersOnDBTables",res)
+            return res
 
-        return res
+        except Exception as e:
 
-        # except Exception as e:
-        #     print('UpdateOrdersOnDBTables Exceptions', e)
+            print('UpdateOrdersOnDBTables Exceptions', e)

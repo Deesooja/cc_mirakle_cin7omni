@@ -65,6 +65,7 @@ class Platform(models.Model):
     settings = models.ForeignKey(PlatformSettings, on_delete=models.DO_NOTHING, null=True)
     isConnected = models.BooleanField(default=False)
     isActive = models.BooleanField(default=False)
+    isOrderSyncProcessing = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -133,8 +134,8 @@ class PlatformOrder(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return self.api_id
+    # def __str__(self):
+    #     return self.api_id
 
 class PlatformOrderPayment(models.Model):
     platform_order = models.ForeignKey(PlatformOrder, on_delete=models.CASCADE, db_index=True, unique=False)
