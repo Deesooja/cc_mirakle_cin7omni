@@ -88,9 +88,24 @@ class MirakleGetOrdersView(APIView):
 
         platform=Platform.objects.get(id=3)
 
-        Order_object=MirakleServices(platform,"1030171019-A").CreateOrdersOnDBTables()
+        mirakleServicesObject=MirakleServices(platform)
 
-        # if Order_object.isSuccess:
+        Order_object=mirakleServicesObject.GetOrders()
+
+        if Order_object.isSuccess:
+            res = MirakleServices.UpdateOrdersOnDBTables(mirakleServicesObject,Order_object.body['orders'][0])
+
+            res = MirakleServices.CreateOrdersOnDBTables(Order_object.body['orders'][2])
+
+            for order in Order_object.body['orders'][0:2]:
+
+                if not PlatformOrder.objects.filter(api_id=order.get("order_id")).exists():
+
+                    res=MirakleServices.CreateOrdersOnDBTables(mirakleServicesObject,order)
+                else:
+
+                    res=MirakleServices.UpdateOrdersOnDBTables(mirakleServicesObject,order)
+
 
             # address_json=create_address_json(Order_object.body['orders'][0])
             # print(address_json)
@@ -108,7 +123,8 @@ class MirakleGetOrdersView(APIView):
             # print(platform_order_line_item_json)
 
 
-            # return endpointResponse(status_code=200, massage="OK", data=Order_object.body)
-        return endpointResponse(status_code=200, massage=Order_object, data=[])
+            return endpointResponse(status_code=200, massage=res, data=[])
+
+        return endpointResponse(status_code=200, massage="Not Ok ", data=[])
         
         # return endpointResponse(status_code=400, massage="Bad request", data=[])

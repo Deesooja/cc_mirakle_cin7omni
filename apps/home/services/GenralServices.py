@@ -100,7 +100,7 @@ def create_platform_product_json_from_mirakle(order,platform_id,user_id,price_id
         "quantity": order['order_lines'][0]['quantity'],
         "api_id": order['order_lines'][0]['order_line_id'],
         "api_code": None,
-        "api_status": None,
+        "api_status": "ACTIVE",
         "sku": order['order_lines'][0]['product_sku'],
         "price": price_id
     }
@@ -121,16 +121,16 @@ def create_platform_product_order_json_from_mirakle(order,user_id,customer_id,pl
         "discount_percent": None,
         "isPaid": False,
         "payment_status": None,
-        "isFulfilled": None,
+        # "isFulfilled": None,
         "api_created_at":order.get('created_date'),
         "api_updated_at":order.get('last_updated_date')
     }
     return platform_product_order_json
 
-def create_platform_order_payment_json_from_mirakle(order,platform_id):
+def create_platform_order_payment_json_from_mirakle(order,platform_order_id):
 
     platform_order_payment_json={
-        "platform_order": platform_id,
+        "platform_order": platform_order_id,
         "api_id": order.get("transaction_number"),
         "paid_amount": order.get("price"),
         "paid_on": order.get("transaction_date"),
@@ -154,20 +154,31 @@ def create_platform_order_line_item_json_from_mirakle(order,platform_order_id,pl
     }
     return platform_order_line_item_json
 
- # <-------------------Insert_orders_data_on_db_tables_from_mirakle------------------->
-def insert_orders_data_on_db_tables_from_mirakle(order,platform_object):
+ # <-------------------Insert_and _update_orders_data_on_db_tables_from_mirakle------------------->
+def insert_and_update_orders_data_on_db_tables_from_mirakle(order,platform_object,update=False):
     required_dict={}
     required_dict["user_id"]=platform_object.user.id
     required_dict["platform_id"]=platform_object.id
 
+    platform_order_object=PlatformOrder.objects.get(api_id=order.get("order_id"))
+
+    print("platform_order_object",platform_order_object)
+
     # <-------------------Address------------------->
     address_json=create_address_json_from_mirakle(order)
 
-    address_serialized_data=AddressSerializer(data=address_json)
+    if update:
+        address_object=platform_order_object.customer.address
+        address_serialized_data=AddressSerializer(address_object,data=address_json)
+
+    else:
+
+        address_serialized_data=AddressSerializer(data=address_json)
 
     address_serialized_data.is_valid()
 
     print(address_serialized_data.errors)
+
     if address_serialized_data.is_valid():
         address_serialized_data.save()
         required_dict["address_id"]=address_serialized_data.data.get('id')
@@ -175,10 +186,29 @@ def insert_orders_data_on_db_tables_from_mirakle(order,platform_object):
         return "Check address"
 
     # <-------------------Price------------------->
-    price_json=create_price_json_from_mirakle(order)
-    for price_type in ['price','tax_price','shipping_price']:
 
-        price_serialized_data=PriceSerializer(data=price_json[price_type])
+    price_json=create_price_json_from_mirakle(order)
+
+    for price_type in ['price','tax_price','shipping_price']:
+        if update:
+            if price_type=='price':
+
+                price_object=platform_order_object.total_price
+
+            if price_type == 'tax_price':
+
+                price_object = platform_order_object.tax_price
+
+            if price_type == 'shipping_price':
+
+                price_object = platform_order_object.shipping_price
+
+            price_serialized_data = PriceSerializer(price_object,data=price_json[price_type])
+
+        else:
+
+            price_serialized_data=PriceSerializer(data=price_json[price_type])
+
         price_serialized_data.is_valid()
         print(price_serialized_data.errors)
 
@@ -192,7 +222,14 @@ def insert_orders_data_on_db_tables_from_mirakle(order,platform_object):
     # <-------------------Platform Customer------------------->
     platform_customer_json=create_platform_customer_json_from_mirakle(order,required_dict["address_id"],required_dict["platform_id"])
 
-    platform_customer_serialized_data=PlatformCustomerSerializer(data=platform_customer_json)
+    if update:
+        platform_customer_object=platform_order_object.customer
+
+        platform_customer_serialized_data = PlatformCustomerSerializer(platform_customer_object,data=platform_customer_json)
+
+    else:
+
+        platform_customer_serialized_data=PlatformCustomerSerializer(data=platform_customer_json)
 
     platform_customer_serialized_data.is_valid()
     print(platform_customer_serialized_data.errors)
@@ -204,12 +241,23 @@ def insert_orders_data_on_db_tables_from_mirakle(order,platform_object):
         return "check platform_customer"
 
     # <-------------------Platform Product------------------->
+
     platform_product_json=create_platform_product_json_from_mirakle(order,required_dict["platform_id"],required_dict["user_id"],required_dict["price_id"])
 
-    platform_product_serialized_data=PlatformProductSerializer(data=platform_product_json)
+    if update:
+        product_sku=order['order_lines'][0].get('product_sku')
+
+        platform_product_object=PlatformProduct.objects.get(sku=product_sku)
+
+        platform_product_serialized_data = PlatformProductSerializer(platform_product_object,data=platform_product_json)
+
+    else:
+
+        platform_product_serialized_data=PlatformProductSerializer(data=platform_product_json)
 
     platform_product_serialized_data.is_valid()
     print(platform_product_serialized_data.errors)
+
     if platform_product_serialized_data.is_valid():
         platform_product_serialized_data.save()
         required_dict["platform_product_id"] = platform_product_serialized_data.data.get("id")
@@ -217,9 +265,13 @@ def insert_orders_data_on_db_tables_from_mirakle(order,platform_object):
         return "Check platform_product"
 
     # <-------------------Platform Order------------------->
-    platform_product_order_json=create_platform_product_order_json_from_mirakle(order,user_id=required_dict["user_id"],customer_id=required_dict["platform_customer_id"],platform_id=required_dict["platform_id"],total_price_id=required_dict["price_id"],tax_price_id=required_dict["tax_price"],shipping_price_id=required_dict["shipping_price"])
 
-    platform_product_order_serialized_data=PlatformOrderSerializer(data=platform_product_order_json)
+    platform_product_order_json=create_platform_product_order_json_from_mirakle(order,user_id=required_dict["user_id"],customer_id=required_dict["platform_customer_id"],platform_id=required_dict["platform_id"],total_price_id=required_dict["price_id"],tax_price_id=required_dict["tax_price_id"],shipping_price_id=required_dict["shipping_price_id"])
+    if update:
+        platform_product_order_serialized_data = PlatformOrderSerializer(platform_order_object,data=platform_product_order_json)
+
+    else:
+        platform_product_order_serialized_data=PlatformOrderSerializer(data=platform_product_order_json)
 
     platform_product_order_serialized_data.is_valid()
     print(platform_product_order_serialized_data.errors)
@@ -231,9 +283,18 @@ def insert_orders_data_on_db_tables_from_mirakle(order,platform_object):
         return "Check platform_product_order"
 
     # <-------------------Platform Order Payment------------------->
-    platform_order_payment_json=create_platform_order_payment_json_from_mirakle(order,platform_id=required_dict["platform_id"])
 
-    platform_order_payment_serialized_data=PlatformOrderPaymentSerializer(data=platform_order_payment_json)
+    platform_order_payment_json=create_platform_order_payment_json_from_mirakle(order,platform_order_id=required_dict["platform_product_order_id"])
+
+    if update:
+        platform_order_payment_object=PlatformOrderPayment.objects.get(id=platform_order_object.id)
+
+        platform_order_payment_serialized_data = PlatformOrderPaymentSerializer(platform_order_payment_object,data=platform_order_payment_json)
+
+    else:
+
+        platform_order_payment_serialized_data=PlatformOrderPaymentSerializer(data=platform_order_payment_json)
+
     platform_order_payment_serialized_data.is_valid()
     print(platform_order_payment_serialized_data.errors)
     if platform_order_payment_serialized_data.is_valid():
@@ -243,9 +304,15 @@ def insert_orders_data_on_db_tables_from_mirakle(order,platform_object):
         return "Check platform_order_payment "
 
     # <-------------------Platform Order Line------------------->
-    platform_order_line_item_json=create_platform_order_line_item_json_from_mirakle(order,platform_order_id=required_dict["platform_product_order_id"],platform_product_id=required_dict["platform_product_id"],price_id=required_dict["price_id"],tax_price_id=required_dict["tax_price"])
 
-    platform_order_line_item_serialized_data=PlatformOrderLineItemSerializer(data=platform_order_line_item_json)
+    platform_order_line_item_json=create_platform_order_line_item_json_from_mirakle(order,platform_order_id=required_dict["platform_product_order_id"],platform_product_id=required_dict["platform_product_id"],price_id=required_dict["price_id"],tax_price_id=required_dict["tax_price_id"])
+    if update:
+        platform_order_line_item_object = PlatformOrderLineItem.objects.get(platform_order=platform_order_object.id)
+        platform_order_line_item_serialized_data = PlatformOrderLineItemSerializer(platform_order_line_item_object,data=platform_order_line_item_json)
+
+    else:
+
+        platform_order_line_item_serialized_data=PlatformOrderLineItemSerializer(data=platform_order_line_item_json)
     platform_order_line_item_serialized_data.is_valid()
     print(platform_order_line_item_serialized_data.errors)
 
