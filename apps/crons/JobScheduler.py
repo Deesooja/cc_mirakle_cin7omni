@@ -1,4 +1,6 @@
 from django_cron import CronJobBase, Schedule
+from apps.home.jobs.SyncOrdersFromPlatformjob import SyncOrdersFromPlatformJob
+
 
 
 class SyncOrdersFromPlatform(CronJobBase):
@@ -8,5 +10,5 @@ class SyncOrdersFromPlatform(CronJobBase):
 
     def do(self):
         print("Starting job")
-
+        SyncOrdersFromPlatformJob.checkAndStartSyncThread()
         print("Done")

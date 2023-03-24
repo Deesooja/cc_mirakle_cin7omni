@@ -2,6 +2,7 @@
 from apps.models import *
 from django.contrib.auth.models import User
 from apps.home.serializers import *
+from apps.home.response import endpointResponse
 import inspect
 import time
 def platrform_data_check_and_create_new_data(data):
@@ -383,3 +384,16 @@ def insert_and_update_orders_data_on_db_tables_from_mirakle(order,platform_objec
         return "Check platform_order_line_item "
 
     return True
+
+def create_and_update_on_db_table(Serializer , data,instaince=None):
+
+    platform_serialized_data = {Serializer}(data=data)
+    serializer_class = getattr(serializers, f"{serializer_name}Serializer")
+    platform_serialized_data = serializer_class(data=request.data)
+    if platform_serialized_data.is_valid():
+        platform_serialized_data.save()
+
+        return endpointResponse(status_code=200, massage="Platform  Created", data=platform_serialized_data.data)
+
+    return endpointResponse(status_code=400, massage="Platform  Not Created", data=[])
+

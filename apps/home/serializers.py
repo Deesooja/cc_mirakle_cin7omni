@@ -20,10 +20,11 @@ class PlatformSettingsSerializer(serializers.ModelSerializer):
         fields = ['id', 'isSyncOrder', 'isCreateOrder', 'isSyncFulfillment','isUseDefaultCustomerEmail','default_customer_email','sync_orders_created_after']
 
 class PlatformSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Platform
         fields = ['id', 'user', 'name', 'type','code','display_name','credentials','settings','isConnected','isActive','created_at','updated_at']
-
+        depth=1
 class AddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = Address
