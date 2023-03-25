@@ -69,6 +69,8 @@ class Platform(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering=['created_at']
 
 class PlatformSyncData(models.Model):
     api_id = models.CharField(max_length=255, db_index=True, null=True)

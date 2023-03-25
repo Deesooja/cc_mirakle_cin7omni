@@ -21,7 +21,7 @@ def syncOrdersFromPlatform(platform):
 
         print("apiResponceObject.body[orders]",len(apiResponceObject.body["orders"]))
 
-        for order in apiResponceObject.body["orders"][6:8]:
+        for order in apiResponceObject.body["orders"][0:2]:
 
             if not PlatformOrder.objects.filter(api_id=order.get("order_id")).exists():
 

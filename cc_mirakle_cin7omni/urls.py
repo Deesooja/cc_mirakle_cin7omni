@@ -15,10 +15,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
+from apps.home.views import CsrfTokenView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('user/', include('apps.authentication.endPoint')),
     path('platform/', include('apps.home.endPoint')),
-
+    path('csrf-token', CsrfTokenView.as_view(), name="csrf_token"),
 ]

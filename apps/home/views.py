@@ -6,6 +6,7 @@ from .services.GenralServices import *
 from .response import endpointResponse
 from .services.MirakleServices import MirakleServices
 from apps.home.jobs.SyncOrdersFromPlatformjob import SyncOrdersFromPlatformJob
+from django.middleware.csrf import get_token
 from django.db.models import Q
 
 class PlatformCredentialsView(APIView):
@@ -62,68 +63,86 @@ class PlatformView(APIView):
 
         platform_serialized_data = PlatformSerializer(platform_object)
 
-        platform_serialized_data.data["user"].pop("password")
+        # platform_serialized_data.data["user"].pop("password")
 
         return  platform_serialized_data.data
 
     def get(self,request):
 
-        user_id=request.query_params.get("user_id",None)
+        try:
 
-        platform_id = request.query_params.get("platform_id", None)
+            user_id=request.query_params.get("user_id",None)
 
-        print(platform_id)
+            platform_id = request.query_params.get("platform_id", None)
 
-        type = request.query_params.get("type",None)
+            print(platform_id)
 
-        if platform_id :
+            type = request.query_params.get("type",None)
 
-            platform_object=Platform.objects.get(id=platform_id) if Platform.objects.filter(id=platform_id).exists() else None
+            if platform_id :
 
-            if platform_object:
+                platform_object=Platform.objects.get(id=platform_id) if Platform.objects.filter(id=platform_id).exists() else None
+
+                if platform_object:
+
+                    platform_serialized_data=self.__helper(platform_object)
+
+                    return endpointResponse(status_code=200, massage="Ok", data=platform_serialized_data)
+
+                return endpointResponse(status_code=400, massage="Bad Request", data=[])
+
+
+            platform_data_list=[]
+
+            query=Q(user=user_id,type=type) if type is not None else Q(user=user_id)
+
+            for platform_object in Platform.objects.filter(query):
 
                 platform_serialized_data=self.__helper(platform_object)
 
-                return endpointResponse(status_code=200, massage="Ok", data=platform_serialized_data)
-            
-            return endpointResponse(status_code=400, massage="Bad Request", data=[])
+                platform_data_list.append(platform_serialized_data)
 
+            return endpointResponse(status_code=200, massage="Get Method", data=platform_data_list)
 
-        platform_data_list=[]
-        
-        query=Q(user=user_id,type=type) if type is not None else Q(user=user_id)
+        except Exception as e:
 
-        for platform_object in Platform.objects.filter(query):
+            return endpointResponse(status_code=500, massage=str(e), data=[])
 
-            platform_serialized_data=self.__helper(platform_object)
-
-            platform_data_list.append(platform_serialized_data)
-
-        return endpointResponse(status_code=200, massage="Get Method", data=platform_data_list)
     def post(self, request):
 
         try:
 
-            # if not PlatformCredentials.objects.filter(token_secret=request.data.get('token_secret')).exists():
+            platform_serialized_data=PlatformSerializer(data=request.data)
 
-            response_data=platrform_data_check_and_create_new_data(request.data)
+            if platform_serialized_data.is_valid():
 
-            if response_data['status']:
+                platform_serialized_data.save()
+
+                return endpointResponse(status_code=200, massage="Platform  Created", data=platform_serialized_data.data)
+
+            return endpointResponse(status_code=400, massage="Platform  Not Created", data=[])
+
+        except Exception as e:
+
+            return endpointResponse(status_code=500, massage=str(e), data=[])
 
 
-                platform_serialized_data=PlatformSerializer(data=request.data)
+    def put(self,request,pk):
 
-                if platform_serialized_data.is_valid():
+        try:
 
-                    platform_serialized_data.save()
+            platform_object=Platform.objects.get(id=pk)
 
-                    return endpointResponse(status_code=200, massage="Platform  Created", data=platform_serialized_data.data)
+            platform_serialized_data = PlatformSerializer(platform_object,data=request.data)
 
-                return endpointResponse(status_code=400, massage="Platform  Not Created", data=[])
 
-            return endpointResponse(status_code=400, massage=response_data['massage'], data=[])
+            if platform_serialized_data.is_valid():
 
-            # return endpointResponse(status_code=400, massage="Platform Credentials already exists", data=[])
+                platform_serialized_data.save()
+
+                return endpointResponse(status_code=200, massage="Platform  Created", data=platform_serialized_data.data)
+
+            return endpointResponse(status_code=400, massage="Platform  Not Created", data=[])
 
         except Exception as e:
 
@@ -132,10 +151,14 @@ class PlatformView(APIView):
 
 
 
+class CsrfTokenView(APIView):
+    def get(self, request):
 
+        csrf_token_dict={}
 
+        csrf_token_dict["csrf_token"]=get_token(request)
 
-
+        return endpointResponse(status_code=200, massage="OK", data=csrf_token_dict)
 
 
 
@@ -145,7 +168,9 @@ class PlatformView(APIView):
 class MirakleGetOrdersView(APIView):
     def get(self, request):
 
-        SyncOrdersFromPlatformJob.checkAndStartSyncThread()
+        print(get_token(request))
+
+        # SyncOrdersFromPlatformJob.checkAndStartSyncThread()
 
         # platform=Platform.objects.get(id=5)
         #
